@@ -254,7 +254,7 @@ class Mappings(object):
 
     @staticmethod
     @errors.pretty_exception_handler
-    def task_info_or_vimwiki_follow_link():
+    def task_info_or_vimwiki_follow_link(split=False):
         # Reset the cache() to use up-to-date buffer content
         cache().reset()
 
@@ -274,7 +274,7 @@ class Mappings(object):
         ])
 
         if inside_vimwiki_link:
-            vim.command('VimwikiFollowLink')
+            vim.command('VimwikiSplitLink' if split else 'VimwikiFollowLink')
             return
 
         # No link detected, check for viewport or a task
@@ -289,7 +289,7 @@ class Mappings(object):
 
         # No link detected, not a viewport or a task, so delegate to
         # VimwikiFollowLink for link creation
-        vim.command('VimwikiFollowLink')
+        vim.command('VimwikiSplitLink' if split else 'VimwikiFollowLink')
 
 
 
