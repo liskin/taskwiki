@@ -6,7 +6,7 @@ endif
 " Detect if conceal feature is available
 let s:conceal = exists("+conceallevel") ? ' conceal': ''
 
-syntax cluster TaskWikiVimWiki
+syntax cluster TaskWikiTaskContains
        \ contains=VimwikiListTodo,
                 \ VimwikiTag,
                 \ VimwikiEmoticons,
@@ -27,7 +27,7 @@ syntax cluster TaskWikiVimWiki
                 \ VimwikiWikiLinkT,
                 \ @Spell
 
-syntax match TaskWikiTask /\s*\* \[.\]\s.*$/ contains=@TaskWikiVimWiki
+syntax match TaskWikiTask /\s*\* \[.\]\s.*$/ contains=@TaskWikiTaskContains
 
 " Conceal the UUID
 execute 'syn match TaskWikiTaskUuid containedin=TaskWikiTask /\v#([A-Z]:)?[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/'.s:conceal
@@ -41,12 +41,13 @@ endfor
 
 " Define active and deleted task regions
 " Will be colored dynamically by Meta().source_tw_colors()
-syntax match TaskWikiTaskActive containedin=TaskWikiTask contained contains=@TaskWikiVimWiki /\s*\*\s\[S\]\s[^#]*/
-syntax match TaskWikiTaskCompleted containedin=TaskWikiTask contained contains=@TaskWikiVimWiki /\s*\*\s\[X\]\s[^#]*/
-syntax match TaskWikiTaskDeleted containedin=TaskWikiTask contained contains=@TaskWikiVimWiki /\s*\*\s*\[D\]\s[^#]*/
-syntax match TaskWikiTaskRecurring containedin=TaskWikiTask contained contains=@TaskWikiVimWiki /\s*\*\s\[R\]\s[^#]*/
-syntax match TaskWikiTaskWaiting containedin=TaskWikiTask contained contains=@TaskWikiVimWiki /\s*\*\s\[W\]\s[^#]*/
-syntax match TaskWikiTaskPriority containedin=TaskWikiTask contained /\( !\| !!\| !!!\)\( \)\@=/
+syntax match TaskWikiTaskActive containedin=TaskWikiTask contained contains=@TaskWikiTaskContains /\s*\*\s\[S\]\s[^#]*/
+syntax match TaskWikiTaskCompleted containedin=TaskWikiTask contained contains=@TaskWikiTaskContains /\s*\*\s\[X\]\s[^#]*/
+syntax match TaskWikiTaskDeleted containedin=TaskWikiTask contained contains=@TaskWikiTaskContains /\s*\*\s*\[D\]\s[^#]*/
+syntax match TaskWikiTaskRecurring containedin=TaskWikiTask contained contains=@TaskWikiTaskContains /\s*\*\s\[R\]\s[^#]*/
+syntax match TaskWikiTaskWaiting containedin=TaskWikiTask contained contains=@TaskWikiTaskContains /\s*\*\s\[W\]\s[^#]*/
+syntax match TaskWikiTaskPriority contained /\( !\| !!\| !!!\)\( \)\@=/
+syntax cluster TaskWikiTaskContains add=TaskWikiTaskPriority
 
 " Set concealed parts as really concealed in normal mode, and with cursor over
 " (unless disabled by user)
