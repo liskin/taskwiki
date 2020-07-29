@@ -1,72 +1,73 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function
-
-import sys
+import os
 import re
+import sys
 
-if len(sys.argv) < 3:
-    exit()
+if __name__ == '__main__':
+    path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+    sys.path.insert(0, path)
 
-syntax = sys.argv[1]
-filename = sys.argv[2]
+from taskwiki import regexp
 
-rx_default_media = r"^\s*(={1,6})([^=].*[^=])\1\s*$"
-rx_markdown = r"^\s*(#{1,6})([^#].*)$"
 
-if syntax in ("default", "media"):
-    rx_header = re.compile(rx_default_media)
-elif syntax == "markdown":
-    rx_header = re.compile(rx_markdown)
-else:
-    rx_header = re.compile(rx_default_media + "|" + rx_markdown)
+def match_header(line, syntax):
+    m = re.search(regexp.VIEWPORT[syntax], line)
+    if m:
+        return 'viewport', m
 
-file_content = []
-try:
-    with open(filename, "r") as vim_buffer:
-        file_content = vim_buffer.readlines()
-except:
-    exit()
+    m = re.search(regexp.PRESET[syntax], line)
+    if m:
+        return 'preset', m
 
-result = []
-state = [""]*6
-for lnum, line in enumerate(file_content):
+    m = re.search(regexp.HEADER[syntax], line)
+    if m:
+        return 'header', m
 
-    match_header = rx_header.match(line)
+    return None, None
 
-    if not match_header:
-        continue
 
-    match_lvl = match_header.group(1) or match_header.group(3)
-    match_tag = match_header.group(2) or match_header.group(4)
+def process(file_content, filename, syntax):
+    parents = [None] * 6
+    for lnum, line in enumerate(file_content):
+        cur_kind_long, m = match_header(line, syntax)
+        if not m:
+            continue
 
-    cur_lvl = len(match_lvl)
-    cur_tag = match_tag.split('|')[0].strip()
-    cur_searchterm = "^" + match_header.group(0).rstrip("\r\n") + "$"
-    cur_kind = "h" if not '|' in line else "v"
+        cur_lvl = len(m.group('header_start')) - 1
+        cur_tag = m.group('name').strip()
+        cur_searchterm = "^" + m.group(0).rstrip("\r\n") + "$"
+        cur_kind = cur_kind_long[0]
 
-    state[cur_lvl-1] = cur_tag
-    for i in range(cur_lvl, 6):
-        state[i] = ""
+        assert cur_lvl < len(parents)
+        parents[cur_lvl] = cur_kind_long, cur_tag
+        for i in range(cur_lvl + 1, len(parents)):
+            parents[i] = None
 
-    scope = "&&&".join(
-            [state[i] for i in range(0, cur_lvl-1) if state[i] != ""])
-    if scope:
-        scope = "\theader:" + scope
+        parent_scopes = [p for p in parents[0:cur_lvl] if p]
+        scope = "&&&".join([tag for _, tag in parent_scopes])
+        if scope:
+            parent_kind, _ = parent_scopes[-1]
+            scope = "\t" + parent_kind + ":" + scope
 
-    result.append([cur_tag, filename, cur_searchterm, cur_kind, str(lnum+1), scope])
+        yield('{0}\t{1}\t/{2}/;"\t{3}\tline:{4}{5}'.format(
+            cur_tag, filename, cur_searchterm, cur_kind, str(lnum+1), scope))
 
-for i in range(len(result)):
-    if i != len(result) - 1:
-        if len(result[i+1][5]) <= len(result[i][5]) and len(result[i][5]) != 0:
-            result[i][3] = 'i'
 
-    print('{0}\t{1}\t/{2}/;"\t{3}\tline:{4}{5}'.format(
-        result[i][0],
-        result[i][1],
-        result[i][2],
-        result[i][3],
-        result[i][4],
-        result[i][5],
-        ))
+if __name__ == '__main__':
+    if len(sys.argv) < 3:
+        exit()
+
+    syntax = sys.argv[1]
+    filename = sys.argv[2]
+
+    file_content = []
+    try:
+        with open(filename, "r") as vim_buffer:
+            file_content = vim_buffer.readlines()
+    except:
+        exit()
+
+    for output in process(file_content, filename, syntax):
+        print(output)
