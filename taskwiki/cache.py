@@ -22,10 +22,12 @@ class BufferProxy(object):
 
     def push(self):
         with util.current_line_preserved():
+            buffer = util.get_buffer(self.buffer_number)
             # Only set the buffer contents if the data is changed.
             # Avoids extra undo events with empty diff.
-            if util.get_buffer(self.buffer_number)[:] != self.data:
-                util.get_buffer(self.buffer_number)[:] = self.data
+            if buffer[:] != self.data:
+                buffer[:] = self.data
+                buffer.options['modified'] = True
 
     def __getitem__(self, index):
         try:
@@ -108,14 +110,7 @@ class TaskCache(object):
         default_rc = util.get_var('taskwiki_taskrc_location') or '~/.taskrc'
         default_data = util.get_var('taskwiki_data_location') or None
         extra_warrior_defs = util.get_var('taskwiki_extra_warriors', {})
-        markup_syntax = util.get_var('taskwiki_markup_syntax') or 'default'
-
-        # Handle bytes (vim returnes bytes for Python3)
-        if six.PY3:
-            default_rc = util.decode_bytes(default_rc)
-            default_data = util.decode_bytes(default_data)
-            extra_warrior_defs = util.decode_bytes(extra_warrior_defs)
-            markup_syntax = util.decode_bytes(markup_syntax)
+        markup_syntax = vim.eval("vimwiki#vars#get_wikilocal('syntax')") or 'default'
 
         # Validate markup choice and set it
         if markup_syntax in ["default", "markdown"]:

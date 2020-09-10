@@ -32,7 +32,7 @@ class WholeBuffer(object):
         Updates all the incomplete tasks in the vimwiki file if the info from TW is different.
         """
 
-        c = cache()
+        c = cache.load_current()
         c.reset()
         c.load_tasks()
         c.load_presets()
@@ -51,7 +51,7 @@ class WholeBuffer(object):
         Updates all tasks that differ from their TaskWarrior representation.
         """
 
-        c = cache()
+        c = cache.load_current()
         c.reset()
         c.load_tasks()
         c.load_presets()
@@ -346,12 +346,12 @@ class Meta(object):
         if tagbar_available:
             vim.vars['tagbar_type_vimwiki'] = {
                 'ctagstype': 'default',
-                'kinds': ['h:header', 'i:inside', 'v:viewport'],
+                'kinds': ['h:header', 'p:preset', 'v:viewport'],
                 'sro': '&&&',
-                'kind2scope': {'h':'header', 'v':'viewport'},
+                'kind2scope': {'h': 'header', 'p': 'preset', 'v': 'viewport'},
                 'sort': 0,
                 'ctagsbin': os.path.join(BASE_DIR, 'extra/vwtags.py'),
-                'ctagsargs': 'default'
+                'ctagsargs': cache().markup_syntax
                 }
 
     @errors.pretty_exception_handler
@@ -637,6 +637,5 @@ class ChooseSplitTags(CallbackSplitMixin, SplitTags):
 
 
 if __name__ == '__main__':
-    WholeBuffer.update_from_tw()
     Meta().integrate_tagbar()
     Meta().set_proper_colors()
