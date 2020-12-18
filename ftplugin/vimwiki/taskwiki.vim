@@ -41,11 +41,13 @@ augroup taskwiki
     autocmd BufWrite <buffer> TaskWikiBufferSave
     " Save and load the view to preserve folding, if desired
     if !exists('g:taskwiki_dont_preserve_folds')
-      autocmd BufWinLeave <buffer> mkview
-      autocmd BufWinEnter <buffer> silent! loadview
-      autocmd BufWinEnter <buffer> silent! doautocmd SessionLoadPost
+      autocmd BufWinLeave <buffer> call taskwiki#MkView()
+      autocmd BufWinEnter <buffer> call taskwiki#LoadView()
     endif
+    " Reset cache when switching buffers
     execute "autocmd BufEnter <buffer> :" . g:taskwiki_py . "cache.load_current().reset()"
+    " Update window-local fold options
+    autocmd BufWinEnter <buffer> call taskwiki#FoldInit()
 
     " Refresh on load (if possible, after loadview to preserve folds)
     if has('patch-8.1.1113') || has('nvim-0.4.0')
