@@ -5,7 +5,7 @@ ARG VIM_VERSION=v8.2.0716
 ARG VIMWIKI_VERSION=master
 
 
-FROM python:${PYTHON_VERSION}-alpine${ALPINE_VERSION} AS build
+FROM docker.io/library/python:${PYTHON_VERSION}-alpine${ALPINE_VERSION} AS build
 
 
 FROM build AS build-vim
